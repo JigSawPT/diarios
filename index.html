@@ -43,7 +43,7 @@
     <div class="papel">Reserva · modelos online (ChatGPT)</div>
   </a>
 
-  <footer>O estado vê-se pelo ícone de cada site; esta página não lê nada dos servidores.</footer>
+  <footer>O estado vê-se pelo ícone de cada site; esta página não lê nada dos servidores. «Não confirmado» num Chrome ou Edge com a Tailscale ligada não quer dizer desligado: o atalho abre na mesma.</footer>
 </main>
 <script>
   // Um servidor está ligado se o ícone público do site carregar (pedido de imagem; sem sessão nem dados).
@@ -51,7 +51,8 @@
     const img = new Image();
     const marcar = (on) => {
       el.classList.toggle('on', on); el.classList.toggle('off', !on);
-      el.querySelector('.txt').textContent = on ? 'ligado' : 'sem resposta';
+      el.querySelector('.txt').textContent = on ? 'ligado' : 'não confirmado';
+      el.title = on ? '' : 'Sem confirmação: o servidor pode estar desligado, ou este browser (Chrome/Edge com a Tailscale ligada) não deixa verificar. O atalho abre na mesma.';
     };
     const t = setTimeout(() => marcar(false), 8000);
     img.onload = () => { clearTimeout(t); marcar(true); };
