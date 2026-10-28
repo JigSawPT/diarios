@@ -29,6 +29,7 @@
   .verde .ponto { background: var(--ok); } .verde .estado { color: var(--ok); }
   .amarelo .ponto { background: #d4a72c; } .amarelo .estado { color: #b08800; }
   .vermelho .ponto { background: var(--erro); } .vermelho .estado { color: var(--erro); }
+  .desligado .ponto { background: var(--suave); } .desligado .estado { color: var(--suave); }
   #sclinico.off .ponto { background: var(--linha); } #sclinico.off .estado { color: var(--suave); }
   form { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   form input { font: inherit; font-size: 22px; letter-spacing: 8px; width: 9ch; padding: 6px 4px 6px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--fundo); color: var(--texto); text-align: center; }
@@ -108,12 +109,14 @@
     img.src = new URL('icon.svg', el.href).href + '?t=' + Date.now();
   }
 
-  // Semáforo do SClínico (só a cor, lida do portátil de 20 em 20 s): verde = livre; amarelo = aberto noutro
-  // lado (janela ou visualizador) ou a ligação do portátil em baixo; vermelho = o EndoDesk/Claude está a mexer.
-  const SEMAFORO = { verde: "livre", amarelo: "aberto noutro lado", vermelho: "EndoDesk a trabalhar" };
+  // Semáforo do SClínico do VPN (só a cor, lida do portátil de 20 em 20 s): verde = livre; amarelo = aberto noutro
+  // lado (janela ou visualizador); vermelho = o EndoDesk/Claude está a mexer; desligado = sessão do VPN em baixo.
+  // O SClínico do PC do hospital é outra sessão e não conta.
+  const SEMAFORO = { verde: "livre", amarelo: "aberto noutro lado", vermelho: "EndoDesk a trabalhar",
+                     desligado: "sessão do VPN em baixo" };
   function semaforo(el, url) {
     const marcar = (cor) => {
-      el.classList.remove("verde", "amarelo", "vermelho", "off");
+      el.classList.remove("verde", "amarelo", "vermelho", "desligado", "off");
       el.classList.add(cor || "off");
       el.querySelector(".txt").textContent = SEMAFORO[cor] || "não confirmado";
       el.title = cor ? "" : "Sem resposta do portátil (desligado, ou este browser com a Tailscale ligada não deixa verificar). O atalho abre na mesma.";
