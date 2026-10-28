@@ -26,6 +26,10 @@
   .ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--linha); }
   .on .ponto { background: var(--ok); } .on .estado { color: var(--ok); }
   .off .ponto { background: var(--erro); } .off .estado { color: var(--erro); }
+  .verde .ponto { background: var(--ok); } .verde .estado { color: var(--ok); }
+  .amarelo .ponto { background: #d4a72c; } .amarelo .estado { color: #b08800; }
+  .vermelho .ponto { background: var(--erro); } .vermelho .estado { color: var(--erro); }
+  #sclinico.off .ponto { background: var(--linha); } #sclinico.off .estado { color: var(--suave); }
   form { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   form input { font: inherit; font-size: 22px; letter-spacing: 8px; width: 9ch; padding: 6px 4px 6px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--fundo); color: var(--texto); text-align: center; }
   form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 8px; background: var(--acento); color: #fff; cursor: pointer; }
@@ -74,7 +78,7 @@
       const topo = document.createElement("div"); topo.className = "topo";
       const nome = document.createElement("span"); nome.className = "nome"; nome.textContent = a.nome;
       topo.append(nome);
-      if (a.estado) {
+      if (a.estado || a.id === "sclinico") {
         const e = document.createElement("span"); e.className = "estado";
         e.innerHTML = '<span class="ponto"></span><span class="txt">a verificar…</span>';
         topo.append(e);
@@ -83,6 +87,7 @@
       el.append(topo, papel);
       lista.append(el);
       if (a.estado) verificar(el);
+      if (a.id === "sclinico") semaforo(el, new URL("estado", a.url).href);
     }
     document.getElementById("porta").hidden = true;
     lista.hidden = false;
@@ -101,6 +106,27 @@
     img.onload = () => { clearTimeout(t); marcar(true); };
     img.onerror = () => { clearTimeout(t); marcar(false); };
     img.src = new URL('icon.svg', el.href).href + '?t=' + Date.now();
+  }
+
+  // Semáforo do SClínico (só a cor, lida do portátil de 20 em 20 s): verde = livre; amarelo = aberto noutro
+  // lado (janela ou visualizador) ou a ligação do portátil em baixo; vermelho = o EndoDesk/Claude está a mexer.
+  const SEMAFORO = { verde: "livre", amarelo: "aberto noutro lado", vermelho: "EndoDesk a trabalhar" };
+  function semaforo(el, url) {
+    const marcar = (cor) => {
+      el.classList.remove("verde", "amarelo", "vermelho", "off");
+      el.classList.add(cor || "off");
+      el.querySelector(".txt").textContent = SEMAFORO[cor] || "não confirmado";
+      el.title = cor ? "" : "Sem resposta do portátil (desligado, ou este browser com a Tailscale ligada não deixa verificar). O atalho abre na mesma.";
+    };
+    const ler = async () => {
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        const j = await r.json();
+        marcar(SEMAFORO[j.cor] ? j.cor : null);
+      } catch (e) { marcar(null); }
+    };
+    ler();
+    setInterval(ler, 20000);
   }
 
   document.getElementById("porta").addEventListener("submit", async (ev) => {
