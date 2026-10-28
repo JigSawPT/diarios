@@ -29,7 +29,7 @@
   form { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   form input { font: inherit; font-size: 22px; letter-spacing: 8px; width: 9ch; padding: 6px 4px 6px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--fundo); color: var(--texto); text-align: center; }
   form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 8px; background: var(--acento); color: #fff; cursor: pointer; }
-  #erro { color: var(--erro); font-size: 14px; width: 100%; min-height: 1.5em; margin: 0; }
+  #erro, .erro { color: var(--erro); font-size: 14px; width: 100%; min-height: 1.5em; margin: 0; }
   footer { color: var(--suave); font-size: 12px; margin-top: 20px; }
 </style>
 </head>
@@ -42,12 +42,20 @@
     <button>Abrir</button>
     <p id="erro"></p>
   </form>
+  <form id="trocar" hidden>
+    <p style="margin:0;width:100%">Escolha o seu código de 4 dígitos (substitui o que recebeu).</p>
+    <input id="novo1" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required aria-label="Código novo">
+    <input id="novo2" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required aria-label="Repetir">
+    <button>Mudar</button>
+    <p id="erro2" class="erro"></p>
+  </form>
   <div id="lista" hidden></div>
   <footer id="nota" hidden>O estado dos Diários vê-se pelo ícone de cada site; esta página não lê nada dos servidores. «Não confirmado» num Chrome ou Edge com a Tailscale ligada não quer dizer desligado: o atalho abre na mesma.</footer>
 </main>
 <script>
   // Os atalhos vão cifrados; o código de 4 dígitos dá a chave (PBKDF2 + AES-GCM, tudo neste browser).
-  const COFRE = {"sal":"Y6dmLZn7vj2pYWXsuyrEDA==","iv":"aDHnwT+Hbexrsjl3","it":1000000,"dados":"n40xTudu5l5DySKRMnOi9LCPnFHv66owynSuCHSsW0dLroqHuGXHFSF7C3f6rwDxTYWwl7b4AOeKurlTYaG2JxA66bnZ/Zsxy1CQa5fcuvi0R7v1lQ1DmwSC8pSduQFrDosWJJ8FPKwi0UPDaK4+9nIb1mmU2QdxdxvfAcUPIH6UkPh8u/zbiS+jnZrYq8lQQTOso28khs048RPoBNeNf9ejpwBzSeDP81Nmnu6yWfIm2VqmKD2rJnSSMENh3qlDFM51r8yB7m5EPGZUtA5XfpC8vS6HmNsuROrmX4NtAuxmDuKl+dwBicVdNnUFHFK7CMyJJrhOPTz77edBtwdRECiDpKZnwmvcRsDDfvT+cDz3F2EBmSUGTOO9tPO2B5ID4xawKhFjRxkO99FiDLeZ7VmxDoxIcBUmSYssReyK/bf09GRJ1iUQBNnL2gXWKhj06gZ5fr2a4rR57cYUl8HsA4TTjIjCui8NfB9GKlTogrKWDQxajm1wzc9KQlXCxCPcySBDTmy9DRwHwyCsTtUBgP7OOgveofFEGtGUc0lcIAw+J5GzCRlwNCpkFW3ulqDoeYal8iel1+B52RKcD6BGcsw31QHa2+Kniu2c2vmBPPbwIeSgMiNM1Z42lp0unY2CzWC3AXbmOZjyMqcep4V2c7zvXPqrnBwS6cNXeOyoMts2zBEjB6/K3EIWmwvzpcudeSvDmy7Zv8M1kC5ac8pME6cnBdZsTW9aiLprKXnjVASq7avwWK9ZvZ2mNUTfSKvF8axdTK9CVuWSNppGR7AI1XFi7ExdLk1mZL9pGn3yCQm/t6rDETKtC2VeJ0wo+CYCy2pLEoI0VNE8BW5loF+ppIM730vPwtb0Z4a760jkU6NYl4a6hTnLzUyiZ77ppsuRET/LgkeEsHcIClmeiFDIoU16yhxF4QjtuUzms9BqFhihT+k3ss8qk7AiAQCpF/86eVH5OMHAsI/uTQ8yLBUyRmSHflzibcoap2z6XqvJQguVLbLMimigbm3ZjJJjomRgWUNyWT0bmsAUAau6shCUXWMoL3/EOoQMkiFxWMA="};
+  const COFRE = {"sal":"VVgEFz/rFvjxmAFE8vIPEQ==","iv":"9cwOOojMCI6pRoz1","it":1000000,"dados":"9ShjiAHD+CYXN634FgzZtUzD1/UmladJyIuwQ7PRGb/YxKmOdqC2kY+A4jIXy0etvv3Cdo1wS0iaMfU+ujh7FNGT7zqt3IxOxEUq4U+gXY1oe/uac71X0BDhF0/kOYlq4xisOq4x90Zu6ivSaYxgXo2gf+5BRcd0+feYrLYYHXWMYF2yUEDBYopNsK10KCLggHWl/UZFvXZYQeXe60DXaI1Ik/TbaSr/Die4NfIz7qlzFIhcuqhVbNlJNdsN7IkB7smgK5Dr45LTDQ9IR89LsUcxsnB6NwCOf3PAvR/anTaf9cqY1Y5RyovD87bdOJLVLkzmZPteB8M6XDcchaZoa/IJqnTyQSuD3IOhFPkca1ZGOnjs/sXNTmIm3ibtETTzsEBh0Isi8jXs0cGJ/sx9SUelaP7Sa16vbB2qgFHawSrH4VJkd83WGrDn2moPz8aGafentNQTDoVtEpo/XibqTZhwRaYXiO2wOT/ucSptGSVGtFjpUew3wA/OhcPltLuUSFv68xTyLIcMMftgprepAKO7Zr/1oI+BuusD/zKY+ho8SFsbiHIpH8gf5OlLKyaKIYc7CtrRQktVXTGOxYk9Dnh6U7BqRAm+eVo2fQmpUDETgQMCmNju8XAOqV3uipSdVARZi4KWEUtNWick7fbBYo8ohuj+IkqqGjqblKihdC06fNd7ZDRdXLTAzXmPNSu4UhfJ3z4bams7c+b491TsXAbeausccO/ePeF41OwfMxmtUJjXS5D1vQJN0NAXJ4jZSEpsi5qJg7XG2rNv5KFx4nlRZQValassJsbbQ/dA4vjgrLdiTVhLpufHF9ao8GZ5RMXUxa6eDfQGlepKBFZcdpsgZ1EfZxSS5/HCF0Kq8oXKg+Hwgo3dgViZ0ESfQal1atGgwrk8/UBojn4LMAk9hpAwXQ7sMVu1Dc0SYnzmCFQ632+IUF1lcL+fN8jhsOumUV+H7eK0oT1f2iPhgwuglSGO37w7Flw02tNOsAQcut4BDjaPlhi+jN5PkXYEicrM0qUodJbA7buBV6GoZOTq1Lh2J94NB4b+8IW0gD8=","trocar":true};
+  const MUDAR = "https://marcalozen.tail37d5e2.ts.net/janela/atalhos/codigo";
   const de64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
   async function abrir(pin) {
@@ -100,19 +108,55 @@
     const pin = document.getElementById("pin").value.trim();
     const erro = document.getElementById("erro");
     erro.textContent = "A abrir…";
+    let atalhos;
     try {
-      mostrar(await abrir(pin));
-      try { sessionStorage.setItem("pin", pin); } catch (e) { /* sem armazenamento */ }
+      atalhos = await abrir(pin);
     } catch (e) {
       erro.textContent = "Código errado.";
       document.getElementById("pin").select();
+      return;
     }
+    erro.textContent = "";
+    if (COFRE.trocar) {               // primeira entrada: muda logo o código
+      actual = pin;
+      document.getElementById("porta").hidden = true;
+      document.getElementById("trocar").hidden = false;
+      document.getElementById("novo1").focus();
+      return;
+    }
+    try { sessionStorage.setItem("pin", pin); } catch (e) { /* sem armazenamento */ }
+    mostrar(atalhos);
+  });
+
+  let actual = null;
+  document.getElementById("trocar").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const n1 = document.getElementById("novo1").value.trim(), n2 = document.getElementById("novo2").value.trim();
+    const erro = document.getElementById("erro2");
+    if (!/^[0-9]{4}$/.test(n1)) { erro.textContent = "O código tem de ter 4 dígitos."; return; }
+    if (n1 !== n2) { erro.textContent = "Os dois códigos não são iguais."; return; }
+    erro.textContent = "A mudar…";
+    try {
+      const r = await fetch(MUDAR, { method: "POST", headers: { "Content-Type": "application/json" },
+                                     body: JSON.stringify({ antigo: actual, novo: n1 }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { erro.textContent = j.erro || "Não foi possível mudar o código."; return; }
+    } catch (e) {
+      erro.textContent = "Sem ligação ao portátil (MARCALOZEN). Tente mais tarde.";
+      return;
+    }
+    try { sessionStorage.setItem("pin", n1); sessionStorage.setItem("mudado", "1"); } catch (e) { /* sem armazenamento */ }
+    document.getElementById("trocar").hidden = true;
+    mostrar(await abrir(actual));
+    const aviso = document.createElement("p"); aviso.className = "sub";
+    aviso.textContent = "Código mudado. A página nova fica no ar em 1 a 2 minutos; até lá ainda pode pedir o antigo.";
+    document.getElementById("lista").prepend(aviso);
   });
 
   // no mesmo separador não volta a pedir
   let guardado = null;
   try { guardado = sessionStorage.getItem("pin"); } catch (e) { /* sem armazenamento */ }
-  if (guardado) abrir(guardado).then(mostrar, () => {});
+  if (guardado && !COFRE.trocar) abrir(guardado).then(mostrar, () => {});
 </script>
 </body>
 </html>
