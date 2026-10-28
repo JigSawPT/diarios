@@ -31,6 +31,8 @@
   .vermelho .ponto { background: var(--erro); } .vermelho .estado { color: var(--erro); }
   .desligado .ponto { background: var(--suave); } .desligado .estado { color: var(--suave); }
   #sclinico.off .ponto { background: var(--linha); } #sclinico.off .estado { color: var(--suave); }
+  .cinzento .ponto { background: var(--suave); } .cinzento .estado { color: var(--suave); }
+  #triagem.off .ponto { background: var(--linha); } #triagem.off .estado { color: var(--suave); }
   form { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   form input { font: inherit; font-size: 22px; letter-spacing: 8px; width: 9ch; padding: 6px 4px 6px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--fundo); color: var(--texto); text-align: center; }
   form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 8px; background: var(--acento); color: #fff; cursor: pointer; }
@@ -79,7 +81,7 @@
       const topo = document.createElement("div"); topo.className = "topo";
       const nome = document.createElement("span"); nome.className = "nome"; nome.textContent = a.nome;
       topo.append(nome);
-      if (a.estado || a.id === "sclinico") {
+      if (a.estado || a.id === "sclinico" || a.id === "triagem") {
         const e = document.createElement("span"); e.className = "estado";
         e.innerHTML = '<span class="ponto"></span><span class="txt">a verificar…</span>';
         topo.append(e);
@@ -114,6 +116,17 @@
   // O SClínico do PC do hospital é outra sessão e não conta.
   const SEMAFORO = { verde: "livre", amarelo: "aberto noutro lado", vermelho: "EndoDesk a trabalhar",
                      desligado: "sessão do VPN em baixo" };
+  // Triagem: quantos pedidos esperam decisão; cor da prioridade mais alta entre eles (vermelho = há Muito
+  // prioritários, amarelo = há Prioritários, verde = só Normais, cinzento = nenhum). Vem no mesmo pedido.
+  function contador(t) {
+    const el = document.getElementById("triagem");
+    if (!el) return;
+    const cor = t && ["vermelho", "amarelo", "verde", "cinzento"].includes(t.cor) ? t.cor : null;
+    el.classList.remove("verde", "amarelo", "vermelho", "cinzento", "off");
+    el.classList.add(cor || "off");
+    el.querySelector(".txt").textContent = cor ? (t.n === 0 ? "nada por triar" : t.n + " por triar") : "não confirmado";
+  }
+
   function semaforo(el, url) {
     const marcar = (cor) => {
       el.classList.remove("verde", "amarelo", "vermelho", "desligado", "off");
@@ -126,7 +139,8 @@
         const r = await fetch(url, { cache: "no-store" });
         const j = await r.json();
         marcar(SEMAFORO[j.cor] ? j.cor : null);
-      } catch (e) { marcar(null); }
+        contador(j.triagem);
+      } catch (e) { marcar(null); contador(null); }
     };
     ler();
     setInterval(ler, 20000);
