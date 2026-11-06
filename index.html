@@ -35,6 +35,8 @@
   #triagem.off .ponto { background: var(--linha); } #triagem.off .estado { color: var(--suave); }
   form { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   form input { font: inherit; font-size: 22px; letter-spacing: 8px; width: 9ch; padding: 6px 4px 6px 12px; border: 1px solid var(--linha); border-radius: 8px; background: var(--fundo); color: var(--texto); text-align: center; }
+  #refazer { text-align: center; margin: 14px 0 0; }
+  #refazer button { font: inherit; font-size: 14px; padding: 6px 14px; border: 1px solid var(--linha); border-radius: 8px; background: var(--cartao); color: var(--texto); cursor: pointer; }
   form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 8px; background: var(--acento); color: #fff; cursor: pointer; }
   #erro, .erro { color: var(--erro); font-size: 14px; width: 100%; min-height: 1.5em; margin: 0; }
   footer { color: var(--suave); font-size: 12px; margin-top: 20px; }
@@ -57,7 +59,8 @@
     <p id="erro2" class="erro"></p>
   </form>
   <div id="lista" hidden></div>
-  <footer id="nota" hidden>O estado dos Diários vê-se pelo ícone de cada site; esta página não lê nada dos servidores. «Não confirmado» num Chrome ou Edge com a Tailscale ligada não quer dizer desligado: o atalho abre na mesma.</footer>
+  <p id="refazer" hidden><button type="button" id="verificar">Verificar de novo</button></p>
+  <footer id="nota" hidden>O estado dos Diários vê-se pelo ícone de cada site; esta página não lê nada dos servidores. «Não confirmado» num Chrome ou Edge com a Tailscale ligada não quer dizer desligado: o atalho abre na mesma. A página volta a verificar sozinha (SClínico de 20 em 20 s, Diários de 30 em 30 s).</footer>
 </main>
 <script>
   // Os atalhos vão cifrados; o código de 4 dígitos dá a chave (PBKDF2 + AES-GCM, tudo neste browser).
@@ -95,10 +98,23 @@
     document.getElementById("porta").hidden = true;
     lista.hidden = false;
     document.getElementById("nota").hidden = false;
+    document.getElementById("refazer").hidden = false;
   }
+
+  // Todas as verificações ficam aqui: repetem sozinhas, voltam a correr quando o separador volta à frente
+  // e com o botão «Verificar de novo» (06/11: uma falha passageira deixava «não confirmado» até recarregar).
+  const VERIFICACOES = [];
+  function verificarTudo() { for (const f of VERIFICACOES) f(); }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) verificarTudo(); });
 
   // Um servidor dos Diários está ligado se o ícone público do site carregar (pedido de imagem; sem sessão nem dados).
   function verificar(el) {
+    const uma = () => verificarUma(el);
+    VERIFICACOES.push(uma);
+    uma();
+    setInterval(uma, 30000);
+  }
+  function verificarUma(el) {
     const img = new Image();
     const marcar = (on) => {
       el.classList.toggle('on', on); el.classList.toggle('off', !on);
@@ -142,9 +158,12 @@
         contador(j.triagem);
       } catch (e) { marcar(null); contador(null); }
     };
+    VERIFICACOES.push(ler);
     ler();
     setInterval(ler, 20000);
   }
+
+  document.getElementById("verificar").addEventListener("click", verificarTudo);
 
   document.getElementById("porta").addEventListener("submit", async (ev) => {
     ev.preventDefault();
